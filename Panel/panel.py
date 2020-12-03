@@ -131,7 +131,7 @@ class AnnotationPanel(bpy.types.Panel):
 
         gui_functions.headline(layout,(0.2,"ACTIVE"),(0.4,"OBJECT NAME"),(1,"TEXT"))
         layout.template_list("ANNO_UL_List", "", scene, "objects", scene, "object_index")
-        layout.operator("object.convert_text", text="Convert Text")
+        # layout.operator("object.convert_text", text="Convert Text")
         
 class AnimationPanel(bpy.types.Panel):
     bl_idname = "ANIM_PT_custom_prop_panel"
@@ -215,6 +215,7 @@ class VisibilityPropertyPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = 'Govie Tools'
+    bl_options = {'DEFAULT_CLOSED'}
     bl_order = 4
 
     def draw(self, context):
@@ -229,105 +230,19 @@ class VisibilityPropertyPanel(bpy.types.Panel):
         layout.operator("object.remove_vis_property", text="Remove Property")
 
 
-class GLBExportPanel(bpy.types.Panel):
+class Export1Panel(bpy.types.Panel):
     bl_idname = "GOVIE_PT_export_panel"
     bl_label = "GLB Export"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Govie Tools"
-    bl_order = 5
+    bl_options = {'DEFAULT_CLOSED'}
+  
+    bl_order = 1
 
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-
-        layout.prop(scene,"open_verification_menu",text="Verification", icon = 'TRIA_DOWN' if scene.open_verification_menu else 'TRIA_RIGHT' )
-        if scene.open_verification_menu:
-            mat_name_list = context.scene.mat_name_list
-
-            box = layout.box()
-            if len(mat_name_list)>0:
-                box.label(text="Check Materials :")
-                for mat_name in mat_name_list:
-                    box.label(text=mat_name)
-
-            box.operator("object.check_tex_nodes", text="Find Empty Image Nodes")
-            box.operator("object.cleanup_mesh", text="Cleanup Mesh")
-
-
-        layout.prop(scene.export_settings,"open_export_settings_menu",text="Export Settings", icon = 'TRIA_DOWN' if scene.export_settings.open_export_settings_menu else 'TRIA_RIGHT' )
-        if scene.export_settings.open_export_settings_menu:
-            box = layout.box()
-            # Scene Settings
-            if scene.export_settings.open_scene_settings_menu:
-                box.alert = True
-            box.prop(scene.export_settings,"open_scene_settings_menu",text="Scene", icon = 'TRIA_DOWN' if scene.export_settings.open_scene_settings_menu else 'TRIA_RIGHT')
-            if scene.export_settings.open_scene_settings_menu:
-                box.alert = False  
-
-                col = box.column(align = True)
-                row = col.row(align = True)           
-                row.separator(factor=4)
-                row.prop(scene.export_settings,"export_selected",text="Selected Only", toggle = True, icon="RESTRICT_SELECT_OFF")
-                row.prop(scene.export_settings,"export_lights",text="Include Lights", toggle = True, icon="LIGHT")
-                row.separator(factor=4)
-     
-                row = col.row(align = True)           
-                row.separator(factor=4)
-                row.prop(scene.export_settings,"export_animations",text="Include Animation", toggle = True, icon="RENDER_ANIMATION")
-                row.prop(scene.export_settings,"apply_modifiers",text="Apply Modifiers", toggle = True, icon="MODIFIER")
-                row.separator(factor=4)
-    
-
-            # Animation Settings
-            if scene.export_settings.open_animation_settings_menu:
-                box.alert = True
-            box.prop(scene.export_settings,"open_animation_settings_menu",text="Animation", icon = 'TRIA_DOWN' if scene.export_settings.open_animation_settings_menu else 'TRIA_RIGHT' )
-            if scene.export_settings.open_animation_settings_menu:
-                box.alert = False
-                col = box.column(align = True)
-                row = col.row(align = True)   
-                row.separator(factor=4)   
-                row.prop(scene.export_settings,"use_sampling",text="Use Sampling", toggle = True, icon="OUTLINER_OB_CAMERA")
-                row.prop(scene.export_settings,"group_by_nla",text="Group by NLA", toggle = True, icon="NLA")
-                row.separator(factor=4)
-                row = col.row(align = True)    
-                row.separator(factor=4)
-                row.prop(scene.export_settings,"export_all_influences",text="Include all Bone Influences", toggle = True, icon="BONE_DATA")
-                row.separator(factor=4)
-
-             # Compression Settings
-            if scene.export_settings.open_compression_settings_menu:
-                box.alert = True
-            box.prop(scene.export_settings,"open_compression_settings_menu",text="Compression", icon = 'TRIA_DOWN' if scene.export_settings.open_compression_settings_menu else 'TRIA_RIGHT' )
-            if scene.export_settings.open_compression_settings_menu:
-                box.alert = False
-
-                col = box.column()
-                
-                row = col.row(align = True)   
-                row.separator(factor=4)  
-                row.prop(scene.export_settings,"use_draco",text="Use Draco", toggle = True)
-                row.separator(factor=4)  
-                if scene.export_settings.use_draco:
-                    # Draco Settings
-                    row = col.row(align = True)   
-                    row.separator(factor=4)  
-                    row.prop(scene.export_settings,"export_image_format",text="Format")
-                    row.separator(factor=4)  
-
-                    col = box.column(align = True)
-                    row = col.row(align = True)   
-                    row.separator(factor=4)
-                    row.prop(scene.export_settings,"draco_compression_level",text="Compression Level")
-                    row.prop(scene.export_settings,"postion_quantization",text="Position Quantisation")
-                    row.separator(factor=4)
-
-                    row = col.row(align = True)   
-                    row.separator(factor=4)
-                    row.prop(scene.export_settings,"normal_quantization",text="Normal Quantisation")
-                    row.prop(scene.export_settings,"texcoord_quantization",text="Texture Coord. Quantisation")
-                    row.separator(factor=4)
 
         layout.prop(scene.export_settings,"glb_filename")
         layout.prop(scene,"glb_file_dropdown")
@@ -336,6 +251,99 @@ class GLBExportPanel(bpy.types.Panel):
         row = layout.row()
         row.operator("scene.open_folder",icon='FILEBROWSER')
         row.operator("scene.open_web_preview",text="Preview",icon='WORLD')
+        
+class ExportSceneSettingsPanel(bpy.types.Panel):
+    bl_idname = "GOVIE_PT_export_scene_settings_panel"
+    bl_label = "Scene Settings"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Govie Tools"
+    bl_parent_id = "GOVIE_PT_export_panel"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        box = layout.box()
+        
+        col = box.column(align = True)
+        row = col.row(align = True)           
+        row.prop(scene.export_settings,"export_selected",text="Selected Only", toggle = True, icon="RESTRICT_SELECT_OFF")
+        row.prop(scene.export_settings,"export_lights",text="Include Lights", toggle = True, icon="LIGHT")
+
+        row = col.row(align = True)           
+        row.prop(scene.export_settings,"export_colors",text="Include Vertex Color", toggle = True, icon="GROUP_VERTEX")
+        row.prop(scene.export_settings,"apply_modifiers",text="Apply Modifiers", toggle = True, icon="MODIFIER")
+    
+class ExportAnimSettingsPanel(bpy.types.Panel):
+    bl_idname = "GOVIE_PT_export_anim_settings_panel"
+    bl_label = "Animation Settings"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Govie Tools"
+    bl_parent_id = "GOVIE_PT_export_panel"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene       
+        box = layout.box()
+        
+        col = box.column(align = True)
+        row = col.row(align = True)      
+        row.prop(scene.export_settings,"export_animations",text="Include Animation", toggle = True, icon="RENDER_ANIMATION")
+        row.prop(scene.export_settings,"group_by_nla",text="Group by NLA", toggle = True, icon="NLA")
+        row = col.row(align = True)    
+        row.prop(scene.export_settings,"use_sampling",text="Use Sampling", toggle = True, icon="OUTLINER_OB_CAMERA")
+        row.prop(scene.export_settings,"export_all_influences",text="Include all Bone Influences", toggle = True, icon="BONE_DATA")
+
+class ExportCompressionSettingsPanel(bpy.types.Panel):
+    bl_idname = "GOVIE_PT_export_compression_settings_panel"
+    bl_label = "Compression Settings"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Govie Tools"
+    bl_parent_id = "GOVIE_PT_export_panel"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        box = layout.box()
+        col = box.column()
+        
+        row = col.row(align = True)     
+        row.prop(scene.export_settings,"use_draco",text="Use Draco", toggle = True)  
+        if scene.export_settings.use_draco:
+            # Draco Settings
+            row = col.row(align = True)   
+  
+            row.prop(scene.export_settings,"export_image_format",text="Format")
+
+            col = box.column(align = True)
+            row = col.row(align = True)   
+            row.prop(scene.export_settings,"draco_compression_level",text="Compression Level")
+            row.prop(scene.export_settings,"postion_quantization",text="Position Quantisation")
+
+            row = col.row(align = True)   
+            row.prop(scene.export_settings,"normal_quantization",text="Normal Quantisation")
+            row.prop(scene.export_settings,"texcoord_quantization",text="Texture Coord. Quantisation")
+
+class ExportVerificationPanel(bpy.types.Panel):
+    bl_idname = "GOVIE_PT_verification_panel"
+    bl_label = "Verification"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Govie Tools"
+    bl_parent_id = "GOVIE_PT_export_panel"
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        box = layout.box()       
+        box.operator("object.check_tex_nodes", text="Find Empty Image Nodes",icon="FORCE_TEXTURE")
+        box.operator("object.cleanup_mesh", text="Cleanup Mesh",icon="MESH_ICOSPHERE")
         
 class HelpPanel(bpy.types.Panel):
     bl_idname = "GOVIE_PT_help_panel"
@@ -351,4 +359,4 @@ class HelpPanel(bpy.types.Panel):
         
         layout.operator("scene.open_link",text="Govie Platform",icon='WORLD').url = "https://platform.govie.de/"
         layout.operator("scene.open_link",text="Govie Tutorial",icon='WORLD').url = "https://govie.de/tutorials"
-        layout.prop(scene,"help_govie_tools",text="Help",icon = 'HELP')
+        # layout.prop(scene,"help_govie_tools",text="Help",icon = 'HELP')

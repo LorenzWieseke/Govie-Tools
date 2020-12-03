@@ -6,15 +6,12 @@ from bpy.props import StringProperty,BoolProperty,IntProperty,PointerProperty,En
 
 
 class Export_Settings(bpy.types.PropertyGroup):  
-    open_export_settings_menu: BoolProperty(default = False)    
-    open_scene_settings_menu: BoolProperty(default = False)    
-    open_animation_settings_menu: BoolProperty(default = False)    
-    open_compression_settings_menu: BoolProperty(default = False)    
     glb_filename: StringProperty(name="Filename",default="filename")   
     export_selected: BoolProperty(default = False)
     export_lights: BoolProperty(default = False)
     export_animations: BoolProperty(default = True)
     apply_modifiers: BoolProperty(default = False)
+    export_colors: BoolProperty(default = True)
     use_sampling:BoolProperty(default = False)
     group_by_nla:BoolProperty(default = True)
     export_all_influences:BoolProperty(default = False)

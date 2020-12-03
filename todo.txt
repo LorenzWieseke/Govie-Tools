@@ -1,1 +1,1 @@
-- move functions from properties.py to functions.py
+- help properties should influcene themseleves

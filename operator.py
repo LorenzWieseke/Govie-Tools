@@ -1,8 +1,6 @@
 import bpy
 import os
-from .. Functions import functions
-import subprocess
-import addon_utils
+from . functions import *
 
 
 C = bpy.context
@@ -41,9 +39,8 @@ class GOVIE_Preview_Operator(bpy.types.Operator):
     bl_idname = "scene.open_web_preview"
     bl_label = "Open in Browser"
     bl_description = "Press export to display preview of exported file"
-    
-    port = 8000
-    url = "https://3dit-tools.s3.eu-central-1.amazonaws.com/StaticGLBViewer/index.html#model=http://127.0.0.1:"+str(port)+"/export.glb"
+
+    url = "https://3dit-tools.s3.eu-central-1.amazonaws.com/StaticGLBViewer/index.html#model=http://127.0.0.1:8000/export.glb"
 
     @classmethod
     def poll(cls, context):
@@ -61,9 +58,9 @@ class GOVIE_Preview_Operator(bpy.types.Operator):
 
         script_file = os.path.realpath(__file__)
         script_dir = os.path.dirname(script_file)
-        server_path = os.path.join(script_dir, '..',"Server\server.py")
 
-        functions.start_server(server_path,file_path,self.port)
+        server_path = bpy.path.abspath(script_dir+"\Server\server.py")
+        start_server(server_path,file_path)
         # run browser
         bpy.ops.wm.url_open(url = self.url)
         return {"FINISHED"}
@@ -141,20 +138,8 @@ class GOVIE_Quick_Export_GLB_Operator(bpy.types.Operator):
             return False
 
     def execute(self, context):
-        #check spelling
-        filename = context.scene.export_settings.glb_filename
-        context.scene.export_settings.glb_filename = functions.convert_umlaut(filename)
-        save_preview_lightmap_setting = bpy.context.scene.texture_settings.preview_lightmap
-        
-        # GLBTextureTools installed ?
-        if addon_utils.check("GLBTextureTools"):
-            bpy.ops.object.preview_bake_texture(connect=False)
-            bpy.ops.object.preview_lightmap(connect=False)
-            bpy.ops.object.lightmap_to_emission(connect=True)
-
         # blender file saved 
         file_is_saved = bpy.data.is_saved
-
         # create folder
         path = bpy.path.abspath("//glb//")
 
@@ -176,8 +161,6 @@ class GOVIE_Quick_Export_GLB_Operator(bpy.types.Operator):
         postion_quantization = context.scene.export_settings.postion_quantization
         normal_quantization = context.scene.export_settings.normal_quantization
         texcoord_quantization = context.scene.export_settings.texcoord_quantization
-        export_all_influences = context.scene.export_settings.export_all_influences
-        export_colors = context.scene.export_settings.export_colors
 
         if file_is_saved:
             # export glb
@@ -193,21 +176,10 @@ class GOVIE_Quick_Export_GLB_Operator(bpy.types.Operator):
                                     export_extras=True,
                                     export_lights=export_lights,
                                     export_animations=export_animations,
-                                    export_morph=True,
                                     export_apply=apply_modifiers,
                                     export_image_format=export_image_format,
                                     export_nla_strips=group_by_nla,
-                                    export_force_sampling=use_sampling,
-                                    export_all_influences=export_all_influences,
-                                    export_colors=export_colors)
-            # change glb dropdown entry
-            context.scene.glb_file_dropdown = context.scene.export_settings.glb_filename
-
-            if addon_utils.check("GLBTextureTools"):
-                bpy.ops.object.lightmap_to_emission(connect=False)
-                bpy.ops.object.preview_lightmap(connect=save_preview_lightmap_setting)
-
-
+                                    export_force_sampling=use_sampling)
         else:
             self.report({'INFO'}, 'You need to save Blend file first !')
 
@@ -244,7 +216,7 @@ class GOVIE_Convert_Text_Operator(bpy.types.Operator):
             if obj.type == 'FONT':
 
                 # create new object for mesh
-                functions.select_object(obj)
+                select_object(obj)
                 O.object.convert(target='MESH', keep_original=True)
 
                 textMesh = context.object
@@ -284,27 +256,14 @@ class GOVIE_CleanupMesh_Operator(bpy.types.Operator):
         return context.mode == 'OBJECT'
 
     def execute(self, context):
-        exclude_temp_list = []
-        collections = bpy.context.view_layer.layer_collection.children
-
-        # switch on all layers but remember vis settings
-        for collection in collections:
-            exclude_temp_list.append(collection.exclude)
-            collection.exclude = False
-
+        os.system('cls')
         for obj in bpy.data.objects:
             if obj.type == 'MESH':
-                
-                functions.select_object(self,obj)
+                select_object(obj)
                 O.object.editmode_toggle()
                 O.mesh.delete_loose()
                 O.mesh.dissolve_degenerate()
                 O.object.editmode_toggle()
-
-        # set back layer settings
-        for collection, exclude_temp_value in zip(collections,exclude_temp_list):
-            collection.exclude = exclude_temp_value
-
 
         self.report({'INFO'}, 'Meshes Cleaned !')
         return {'FINISHED'}
@@ -323,14 +282,19 @@ class GOVIE_CheckTexNodes_Operator(bpy.types.Operator):
         mat_name_list.clear()
 
         # get materials with texture nodes that have no image assigned
-        for mat in D.materials:
-            if mat.node_tree is None:
-                continue
-            for node in mat.node_tree.nodes:
-                if node.type == "TEX_IMAGE" and node.image is None:
-                    mat_name_list.append(mat.name)
-                    self.report({'INFO'}, "Found empty image node in material {}".format(mat.name))
-                    functions.select_object_by_mat(self,mat)
+        materialsWithEmptyTexNode = [
+            mat for mat in D.materials for node in mat.node_tree.nodes if node.type == "TEX_IMAGE" and node.image is None]
+
+       # add to list
+        for mat in materialsWithEmptyTexNode:
+            mat_name_list.append(mat.name)
+
+        for obj in D.objects:
+            if obj.type == "MESH":
+                object_materials = [slot.material for slot in obj.material_slots]
+                material_detected = set(object_materials).intersection(set(materialsWithEmptyTexNode))
+                if len(material_detected) > 0:
+                    select_object(obj)
 
         if len(mat_name_list) == 0:
             self.report({'INFO'}, 'No Empty Image Nodes')
